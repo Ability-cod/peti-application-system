@@ -19,6 +19,33 @@ $payment_stmt->bind_param('i', $applicant['id']);
 $payment_stmt->execute();
 $payment = $payment_stmt->get_result()->fetch_assoc();
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'submit_payment_proof') {
+    if (!verify_csrf()) {
+        redirect('dashboard.php');
+    }
+
+    if (!$payment || $payment['status'] !== 'pending') {
+        set_flash('error', 'There is no pending payment to update.');
+        redirect('dashboard.php');
+    }
+
+    $payer_phone = sanitize($_POST['payer_phone'] ?? '');
+    $payer_network = sanitize($_POST['payer_network'] ?? '');
+    $transaction_id = sanitize($_POST['transaction_id'] ?? '');
+
+    if ($payer_phone === '' || $payer_network === '' || $transaction_id === '') {
+        set_flash('error', 'Please fill in your phone number, network, and Transaction ID.');
+        redirect('dashboard.php');
+    }
+
+    $upd = $conn->prepare('UPDATE payments SET payer_phone=?, payer_network=?, transaction_id=? WHERE id=?');
+    $upd->bind_param('sssi', $payer_phone, $payer_network, $transaction_id, $payment['id']);
+    $upd->execute();
+
+    set_flash('success', 'Thank you! Your payment proof has been submitted. The college will confirm it shortly.');
+    redirect('dashboard.php');
+}
+
 $payment_settings = get_payment_settings($conn);
 
 $unread_stmt = $conn->prepare('SELECT COUNT(*) AS c FROM messages WHERE applicant_id = ? AND is_read = 0');
@@ -60,13 +87,36 @@ require __DIR__ . '/../includes/header.php';
                 <?php if ($payment_settings): ?>
                     <p>
                         Pay via <strong><?php echo sanitize($payment_settings['network_name']); ?></strong>,
-                        Lipa Namba: <strong><?php echo sanitize($payment_settings['lipa_number']); ?></strong>.
-                        Use your control number above as the Reference/Kumbukumbu.
+                        Number: <strong><?php echo sanitize($payment_settings['lipa_number']); ?></strong>.
                     </p>
                     <?php if (!empty($payment_settings['instructions'])): ?>
                         <p class="muted"><?php echo nl2br(sanitize($payment_settings['instructions'])); ?></p>
                     <?php endif; ?>
                 <?php endif; ?>
+
+                <?php if (!empty($payment['transaction_id'])): ?>
+                    <p class="muted">You already submitted Transaction ID <strong><?php echo sanitize($payment['transaction_id']); ?></strong>. Awaiting confirmation from the college.</p>
+                <?php else: ?>
+                    <p class="muted">Already paid? Submit your Transaction ID below so the college can confirm it faster.</p>
+                    <form method="POST" class="app-form">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="action" value="submit_payment_proof">
+                        <label for="payer_phone">Phone Number You Paid From</label>
+                        <input type="text" id="payer_phone" name="payer_phone" required placeholder="e.g. 07XXXXXXXX">
+                        <label for="payer_network">Network You Used</label>
+                        <select id="payer_network" name="payer_network" required>
+                            <option value="">-- Select --</option>
+                            <option value="M-Pesa (Vodacom)">M-Pesa (Vodacom)</option>
+                            <option value="Tigo Pesa/Mixx by Yas">Tigo Pesa/Mixx by Yas</option>
+                            <option value="Airtel Money">Airtel Money</option>
+                            <option value="HaloPesa">HaloPesa</option>
+                        </select>
+                        <label for="transaction_id">Transaction ID (from your payment confirmation SMS)</label>
+                        <input type="text" id="transaction_id" name="transaction_id" required placeholder="e.g. QFI5X2Y8ZQ">
+                        <button type="submit" class="btn btn-secondary">Submit Payment Proof</button>
+                    </form>
+                <?php endif; ?>
+
                 <p class="muted">Your status will change to PAID once the college confirms your payment.</p>
             <?php elseif ($applicant['payment_status'] === 'paid'): ?>
                 <p>Payment confirmed. You can now select your course.</p>

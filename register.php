@@ -31,11 +31,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('register.php');
     }
 
-    // Validate the index number FORMAT only (centre/candidate/year).
-    // We no longer live-check it against NECTA's site — that depended on
-    // NECTA's servers being reachable and their page layout staying the
-    // same, which proved unreliable. Genuine verification now happens
-    // when the admin reviews the uploaded Form Four certificate.
     $format_check = validate_necta_index_format($index_number_raw);
     if (!$format_check['ok']) {
         set_flash('error', $format_check['message']);
@@ -67,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $check->close();
 
-    // Year is embedded in the index number itself (centre/candidate/year).
     $year_completed_form_four = explode('/', $index_number)[2];
     $hash = password_hash($password, PASSWORD_DEFAULT);
 

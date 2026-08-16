@@ -21,14 +21,10 @@ if (!$applicant) {
     redirect('applications.php');
 }
 
-$parents = ['father' => [], 'mother' => []];
-$pstmt = $conn->prepare('SELECT * FROM parents_guardians WHERE applicant_id = ?');
-$pstmt->bind_param('i', $id);
-$pstmt->execute();
-$pres = $pstmt->get_result();
-while ($row = $pres->fetch_assoc()) {
-    $parents[$row['relation']] = $row;
-}
+$gstmt = $conn->prepare('SELECT * FROM guardian WHERE applicant_id = ?');
+$gstmt->bind_param('i', $id);
+$gstmt->execute();
+$guardian = $gstmt->get_result()->fetch_assoc();
 
 $course_name = '-';
 if ($applicant['course_id']) {
@@ -50,6 +46,7 @@ require __DIR__ . '/../includes/header.php';
             <h2>Personal</h2>
             <p><strong>Index Number:</strong> <?php echo sanitize($applicant['form_four_index_number']); ?></p>
             <p><strong>Gender:</strong> <?php echo sanitize(ucfirst($applicant['gender'])); ?></p>
+            <p><strong>Marital Status:</strong> <?php echo sanitize(ucfirst(str_replace('_', ' ', $applicant['marital_status']))); ?></p>
             <p><strong>Email:</strong> <?php echo sanitize($applicant['email']); ?></p>
             <p><strong>Phone:</strong> <?php echo sanitize($applicant['phone']); ?></p>
             <p><strong>Nationality:</strong> <?php echo sanitize($applicant['nationality']); ?></p>
@@ -66,15 +63,14 @@ require __DIR__ . '/../includes/header.php';
         </div>
     </div>
 
-    <?php foreach (['father' => 'Father', 'mother' => 'Mother'] as $rel => $label): ?>
-        <h2><?php echo $label; ?></h2>
-        <p><strong>Name:</strong> <?php echo sanitize($parents[$rel]['full_name'] ?? ''); ?> &middot;
-           <strong>Phone:</strong> <?php echo sanitize($parents[$rel]['phone'] ?? ''); ?> &middot;
-           <strong>Email:</strong> <?php echo sanitize($parents[$rel]['email'] ?? ''); ?></p>
-        <p><strong>Occupation:</strong> <?php echo sanitize($parents[$rel]['occupation'] ?? ''); ?></p>
-        <p><strong>Location:</strong> <?php echo sanitize(($parents[$rel]['region'] ?? '') . ', ' . ($parents[$rel]['district'] ?? '') . ', ' . ($parents[$rel]['ward'] ?? '') . ', ' . ($parents[$rel]['village_street'] ?? '')); ?></p>
-        <p><strong>Postal Address:</strong> <?php echo sanitize($parents[$rel]['postal_address'] ?? ''); ?></p>
-    <?php endforeach; ?>
+    <h2>Guardian / Mdhamini</h2>
+    <?php if ($guardian): ?>
+        <p><strong>Name:</strong> <?php echo sanitize($guardian['full_name']); ?></p>
+        <p><strong>Address:</strong> <?php echo sanitize($guardian['address']); ?></p>
+        <p><strong>Contact:</strong> <?php echo sanitize($guardian['contact']); ?></p>
+    <?php else: ?>
+        <p class="muted">Not provided yet.</p>
+    <?php endif; ?>
 
     <p><a href="applications.php">&larr; Back to All Applicants</a></p>
 </section>

@@ -14,21 +14,17 @@ if (!$applicant) {
     redirect('../logout.php');
 }
 
-// Once details have already been submitted and payment is confirmed,
-// send the applicant straight to course selection instead of letting
-// them re-enter this form.
 if ($applicant['profile_status'] === 'submitted' && $applicant['payment_status'] === 'paid' && !$applicant['course_id']) {
     redirect('course_selection.php');
 }
 
-// Fetch existing parent/guardian records if any
-$parents = ['father' => [], 'mother' => []];
-$pstmt = $conn->prepare('SELECT * FROM parents_guardians WHERE applicant_id = ?');
-$pstmt->bind_param('i', $applicant['id']);
-$pstmt->execute();
-$pres = $pstmt->get_result();
-while ($row = $pres->fetch_assoc()) {
-    $parents[$row['relation']] = $row;
+// Fetch existing guardian record if any
+$gstmt = $conn->prepare('SELECT * FROM guardian WHERE applicant_id = ?');
+$gstmt->bind_param('i', $applicant['id']);
+$gstmt->execute();
+$guardian = $gstmt->get_result()->fetch_assoc();
+if (!$guardian) {
+    $guardian = ['full_name' => '', 'address' => '', 'contact' => ''];
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -39,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = sanitize($_POST['email'] ?? '');
     $phone = sanitize($_POST['phone'] ?? '');
     $nationality = sanitize($_POST['nationality'] ?? '');
+    $marital_status = sanitize($_POST['marital_status'] ?? '');
     $residence_region = sanitize($_POST['residence_region'] ?? '');
     $residence_district = sanitize($_POST['residence_district'] ?? '');
     $residence_ward = sanitize($_POST['residence_ward'] ?? '');
@@ -49,8 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $birth_district = sanitize($_POST['birth_district'] ?? '');
     $birth_ward = sanitize($_POST['birth_ward'] ?? '');
     $birth_village_street = sanitize($_POST['birth_village_street'] ?? '');
+    $guardian_name = sanitize($_POST['guardian_name'] ?? '');
+    $guardian_address = sanitize($_POST['guardian_address'] ?? '');
+    $guardian_contact = sanitize($_POST['guardian_contact'] ?? '');
 
-    $required = [$email, $phone, $nationality, $residence_region, $residence_district, $residence_ward, $residence_street, $postal_address, $date_of_birth, $birth_region, $birth_district, $birth_ward, $birth_village_street];
+    $required = [$email, $phone, $nationality, $marital_status, $residence_region, $residence_district, $residence_ward, $residence_street, $postal_address, $date_of_birth, $birth_region, $birth_district, $birth_ward, $birth_village_street, $guardian_name, $guardian_address, $guardian_contact];
     foreach ($required as $field) {
         if ($field === '') {
             set_flash('error', 'Please fill in all required fields.');
@@ -58,13 +58,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    if (!in_array($marital_status, ['married', 'not_married'], true)) {
+        set_flash('error', 'Please select a valid marital status.');
+        redirect('application_form.php');
+    }
+
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         set_flash('error', 'Please enter a valid email address.');
         redirect('application_form.php');
     }
 
-    // Certificate upload is required the first time this form is
-    // submitted (i.e. if no certificate is on file yet).
     $certificate_path = $applicant['certificate_path'];
     if (empty($certificate_path)) {
         $upload = handle_certificate_upload($_FILES['certificate'] ?? null, $applicant['id']);
@@ -75,9 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $certificate_path = $upload['path'];
     }
 
-    $stmt = $conn->prepare('UPDATE applicants SET email=?, phone=?, nationality=?, residence_region=?, residence_district=?, residence_ward=?, residence_street=?, postal_address=?, date_of_birth=?, birth_region=?, birth_district=?, birth_ward=?, birth_village_street=?, certificate_path=?, profile_status="submitted" WHERE id=?');
-    $stmt->bind_param('ssssssssssssssi',
-        $email, $phone, $nationality,
+    $stmt = $conn->prepare('UPDATE applicants SET email=?, phone=?, nationality=?, marital_status=?, residence_region=?, residence_district=?, residence_ward=?, residence_street=?, postal_address=?, date_of_birth=?, birth_region=?, birth_district=?, birth_ward=?, birth_village_street=?, certificate_path=?, profile_status="submitted" WHERE id=?');
+    $stmt->bind_param('sssssssssssssssi',
+        $email, $phone, $nationality, $marital_status,
         $residence_region, $residence_district, $residence_ward, $residence_street, $postal_address,
         $date_of_birth,
         $birth_region, $birth_district, $birth_ward, $birth_village_street,
@@ -87,50 +90,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute();
     $stmt->close();
 
-    // Save parents/guardians (father + mother)
-    foreach (['father', 'mother'] as $relation) {
-        $p_name = sanitize($_POST[$relation . '_name'] ?? '');
-        $p_phone = sanitize($_POST[$relation . '_phone'] ?? '');
-        $p_email = sanitize($_POST[$relation . '_email'] ?? '');
-        $p_occupation = sanitize($_POST[$relation . '_occupation'] ?? '');
-        $p_region = sanitize($_POST[$relation . '_region'] ?? '');
-        $p_district = sanitize($_POST[$relation . '_district'] ?? '');
-        $p_ward = sanitize($_POST[$relation . '_ward'] ?? '');
-        $p_village = sanitize($_POST[$relation . '_village_street'] ?? '');
-        $p_postal = sanitize($_POST[$relation . '_postal_address'] ?? '');
+    // Save guardian (single record, insert or update)
+    $check = $conn->prepare('SELECT id FROM guardian WHERE applicant_id = ?');
+    $check->bind_param('i', $applicant['id']);
+    $check->execute();
+    $exists = $check->get_result()->num_rows > 0;
+    $check->close();
 
-        $check = $conn->prepare('SELECT id FROM parents_guardians WHERE applicant_id = ? AND relation = ?');
-        $check->bind_param('is', $applicant['id'], $relation);
-        $check->execute();
-        $exists = $check->get_result()->num_rows > 0;
-        $check->close();
-
-        if ($exists) {
-            $up = $conn->prepare('UPDATE parents_guardians SET full_name=?, phone=?, email=?, occupation=?, region=?, district=?, ward=?, village_street=?, postal_address=? WHERE applicant_id=? AND relation=?');
-            $up->bind_param('sssssssssis', $p_name, $p_phone, $p_email, $p_occupation, $p_region, $p_district, $p_ward, $p_village, $p_postal, $applicant['id'], $relation);
-            $up->execute();
-        } else {
-            $ins = $conn->prepare('INSERT INTO parents_guardians (applicant_id, relation, full_name, phone, email, occupation, region, district, ward, village_street, postal_address) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
-            $ins->bind_param('issssssssss', $applicant['id'], $relation, $p_name, $p_phone, $p_email, $p_occupation, $p_region, $p_district, $p_ward, $p_village, $p_postal);
-            $ins->execute();
-        }
+    if ($exists) {
+        $up = $conn->prepare('UPDATE guardian SET full_name=?, address=?, contact=? WHERE applicant_id=?');
+        $up->bind_param('sssi', $guardian_name, $guardian_address, $guardian_contact, $applicant['id']);
+        $up->execute();
+    } else {
+        $ins = $conn->prepare('INSERT INTO guardian (applicant_id, full_name, address, contact) VALUES (?, ?, ?, ?)');
+        $ins->bind_param('isss', $applicant['id'], $guardian_name, $guardian_address, $guardian_contact);
+        $ins->execute();
     }
 
-    // Generate a control number now that details are complete, but only
-    // the first time this is submitted.
     $has_payment = $conn->query('SELECT id FROM payments WHERE applicant_id = ' . (int) $applicant['id'])->num_rows > 0;
     if (!$has_payment) {
-        $control_number = generate_control_number($conn);
-        $pay_stmt = $conn->prepare('INSERT INTO payments (applicant_id, control_number, amount, status) VALUES (?, ?, 5000.00, "pending")');
+        //$control_number = generate_control_number($conn);
+        $pay_stmt = $conn->prepare('INSERT INTO payments (applicant_id, control_number, amount, status) VALUES (?, ?, 10000.00, "pending")');
         $pay_stmt->bind_param('is', $applicant['id'], $control_number);
         $pay_stmt->execute();
         $pay_stmt->close();
+
         $payment_settings = get_payment_settings($conn);
         $pay_instructions = $payment_settings
             ? 'Pay via ' . $payment_settings['network_name'] . ', Lipa Namba: ' . $payment_settings['lipa_number'] . ', using this control number as your Reference.'
-            : 'Pay Tsh 5,000 using this control number.';
+            : 'Pay Tsh 10,000 using this control number.';
         set_flash('success', 'Your details and certificate have been saved. Your control number is ' . $control_number . '. ' . $pay_instructions . ' Then check back here.');
-        } else {
+    } else {
         set_flash('success', 'Your details have been updated.');
     }
     redirect('dashboard.php');
@@ -141,7 +131,7 @@ require __DIR__ . '/../includes/header.php';
 
 <section class="form-section">
     <h1>Application Form</h1>
-    <p>Step 2 of 3: Fill in your personal, birth, and parent/guardian details, and upload a scan/photo of your Form Four certificate.</p>
+    <p>Step 2 of 3: Fill in your personal, birth, and guardian details, and upload a scan/photo of your Form Four certificate.</p>
 
     <form method="POST" class="app-form" enctype="multipart/form-data">
         <?php echo csrf_field(); ?>
@@ -162,9 +152,16 @@ require __DIR__ . '/../includes/header.php';
         <label for="nationality">Nationality</label>
         <input type="text" name="nationality" id="nationality" required value="<?php echo sanitize($applicant['nationality']); ?>">
 
+        <label for="marital_status">Marital Status</label>
+        <select id="marital_status" name="marital_status" required>
+            <option value="">-- Select --</option>
+            <option value="married" <?php echo $applicant['marital_status'] === 'married' ? 'selected' : ''; ?>>Married</option>
+            <option value="not_married" <?php echo $applicant['marital_status'] === 'not_married' ? 'selected' : ''; ?>>Not Married</option>
+        </select>
+
         <h2>Form Four Certificate</h2>
         <?php if (!empty($applicant['certificate_path'])): ?>
-            <p class="muted">A certificate is already on file. You can upload a new one below to replace it, or leave this blank to keep the current one.</p>
+            <p class="muted">A certificate is already on file. Upload a new one below to replace it, or leave blank to keep the current one.</p>
             <p><a href="../<?php echo sanitize($applicant['certificate_path']); ?>" target="_blank">View currently uploaded certificate</a></p>
             <input type="file" name="certificate" accept=".jpg,.jpeg,.png,.pdf">
         <?php else: ?>
@@ -192,25 +189,13 @@ require __DIR__ . '/../includes/header.php';
             <div><label>Village/Street</label><input type="text" name="birth_village_street" required value="<?php echo sanitize($applicant['birth_village_street']); ?>"></div>
         </div>
 
-        <?php foreach (['father' => 'Father', 'mother' => 'Mother'] as $rel => $label): ?>
-            <h2><?php echo $label; ?>'s Details</h2>
-            <label>Full Name</label>
-            <input type="text" name="<?php echo $rel; ?>_name" required value="<?php echo sanitize($parents[$rel]['full_name'] ?? ''); ?>">
-            <div class="grid-2">
-                <div><label>Phone</label><input type="text" name="<?php echo $rel; ?>_phone" required value="<?php echo sanitize($parents[$rel]['phone'] ?? ''); ?>"></div>
-                <div><label>Email</label><input type="email" name="<?php echo $rel; ?>_email" required value="<?php echo sanitize($parents[$rel]['email'] ?? ''); ?>"></div>
-            </div>
-            <label>Occupation</label>
-            <input type="text" name="<?php echo $rel; ?>_occupation" required value="<?php echo sanitize($parents[$rel]['occupation'] ?? ''); ?>">
-            <div class="grid-2">
-                <div><label>Region</label><input type="text" name="<?php echo $rel; ?>_region" required value="<?php echo sanitize($parents[$rel]['region'] ?? ''); ?>"></div>
-                <div><label>District</label><input type="text" name="<?php echo $rel; ?>_district" required value="<?php echo sanitize($parents[$rel]['district'] ?? ''); ?>"></div>
-                <div><label>Ward</label><input type="text" name="<?php echo $rel; ?>_ward" required value="<?php echo sanitize($parents[$rel]['ward'] ?? ''); ?>"></div>
-                <div><label>Village/Street</label><input type="text" name="<?php echo $rel; ?>_village_street" required value="<?php echo sanitize($parents[$rel]['village_street'] ?? ''); ?>"></div>
-            </div>
-            <label>Postal Address</label>
-            <input type="text" name="<?php echo $rel; ?>_postal_address" required value="<?php echo sanitize($parents[$rel]['postal_address'] ?? ''); ?>">
-        <?php endforeach; ?>
+        <h2>Guardian / Mdhamini Details</h2>
+        <label>Full Name</label>
+        <input type="text" name="guardian_name" required value="<?php echo sanitize($guardian['full_name']); ?>">
+        <label>Address</label>
+        <input type="text" name="guardian_address" required value="<?php echo sanitize($guardian['address']); ?>">
+        <label>Contact (Phone/Email)</label>
+        <input type="text" name="guardian_contact" required value="<?php echo sanitize($guardian['contact']); ?>">
 
         <button type="submit" class="btn btn-primary">Submit Application</button>
     </form>

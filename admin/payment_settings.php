@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $instructions = sanitize($_POST['instructions'] ?? '');
 
     if ($network_name === '' || $lipa_number === '') {
-        set_flash('error', 'Network name and Lipa Namba are required.');
+        set_flash('error', 'Network name and phone number are required.');
         redirect('payment_settings.php');
     }
 
@@ -46,19 +46,19 @@ require __DIR__ . '/../includes/header.php';
 
 <section class="admin-section">
     <h1>Payment Settings</h1>
-    <p>This is the Lipa Namba/Business Number that applicants are told to pay their Tsh 5,000 application fee to, along with their control number as the reference. Update it here any time your payment details change.</p>
+    <p>This is the mobile money number applicants are told to pay their Tsh 10,000 application fee to. Because Tanzania's mobile networks are interoperable, students on Tigo Pesa, Airtel Money, or HaloPesa can send directly to a Vodacom M-Pesa number too &mdash; explain that in the instructions box below.</p>
 
     <form method="POST" class="app-form">
         <?php echo csrf_field(); ?>
 
-        <label for="network_name">Mobile Network (e.g. M-Pesa, Tigo Pesa/Mixx by Yas, Airtel Money, HaloPesa)</label>
+        <label for="network_name">Receiving Network (e.g. M-Pesa (Vodacom))</label>
         <input type="text" id="network_name" name="network_name" required value="<?php echo sanitize($settings['network_name'] ?? ''); ?>">
 
-        <label for="lipa_number">Lipa Namba / Business Number</label>
+        <label for="lipa_number">Phone Number to Receive Payment</label>
         <input type="text" id="lipa_number" name="lipa_number" required value="<?php echo sanitize($settings['lipa_number'] ?? ''); ?>">
 
-        <label for="instructions">Additional Instructions (optional)</label>
-        <textarea id="instructions" name="instructions" rows="4" placeholder="e.g. Dial *150*00# then select Lipa kwa M-Pesa..."><?php echo sanitize($settings['instructions'] ?? ''); ?></textarea>
+        <label for="instructions">Additional Instructions (optional, shown to every applicant)</label>
+        <textarea id="instructions" name="instructions" rows="5" placeholder="e.g. Tigo Pesa, Airtel Money, and HaloPesa users can also send directly to this number using their own network's 'Tuma Pesa Mtandao Mtambuka' option."><?php echo sanitize($settings['instructions'] ?? ''); ?></textarea>
 
         <button type="submit" class="btn btn-primary">Save Payment Settings</button>
     </form>

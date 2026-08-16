@@ -1,8 +1,4 @@
 <?php
-/**
- * Shared helper functions used across the system.
- */
-
 function sanitize($value) {
     return htmlspecialchars(trim($value ?? ''), ENT_QUOTES, 'UTF-8');
 }
@@ -70,9 +66,6 @@ function get_open_window($conn) {
     return $result->num_rows > 0 ? $result->fetch_assoc() : null;
 }
 
-/**
- * Builds a display full name from the three separate name fields.
- */
 function applicant_full_name($applicant) {
     $parts = array_filter([
         $applicant['first_name'] ?? '',
@@ -82,18 +75,6 @@ function applicant_full_name($applicant) {
     return trim(implode(' ', $parts));
 }
 
-/**
- * Validates the FORMAT of a Form Four Index Number only (no live check
- * against NECTA — that was dropped because it depends on NECTA's site
- * being reachable and its page structure staying stable, which proved
- * unreliable). The real verification now happens by an admin reviewing
- * the uploaded Form Four certificate against the typed details.
- *
- * Expected format: <centre code>/<candidate number>/<year>
- * e.g. S0001/0001/2020
- *
- * @return array{ok:bool, message:string, normalized:?string}
- */
 function validate_necta_index_format($index_number) {
     $index_number = strtoupper(trim($index_number));
 
@@ -109,71 +90,67 @@ function validate_necta_index_format($index_number) {
     return ['ok' => true, 'normalized' => $centre . '/' . $candidate . '/' . $year, 'message' => ''];
 }
 
-/**
- * Handles an uploaded Form Four certificate file (image or PDF).
- * Saves it under /uploads/certificates/ with a random filename and
- * returns the relative path to store in the database, or an error.
- *
- * @return array{ok:bool, path:?string, message:?string}
- */
 function handle_certificate_upload($file, $applicant_id) {
     if (empty($file) || $file['error'] === UPLOAD_ERR_NO_FILE) {
         return ['ok' => false, 'path' => null, 'message' => 'Please choose your Form Four certificate file.'];
     }
-
     if ($file['error'] !== UPLOAD_ERR_OK) {
         return ['ok' => false, 'path' => null, 'message' => 'Upload failed. Please try again.'];
     }
-
-    $max_size = 5 * 1024 * 1024; // 5MB
+    $max_size = 5 * 1024 * 1024;
     if ($file['size'] > $max_size) {
         return ['ok' => false, 'path' => null, 'message' => 'File is too large. Maximum size is 5MB.'];
     }
-
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime = finfo_file($finfo, $file['tmp_name']);
     finfo_close($finfo);
-
-    $allowed = [
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png',
-        'application/pdf' => 'pdf',
-    ];
-
+    $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'application/pdf' => 'pdf'];
     if (!isset($allowed[$mime])) {
         return ['ok' => false, 'path' => null, 'message' => 'Only JPG, PNG, or PDF files are allowed.'];
     }
-
     $ext = $allowed[$mime];
     $filename = 'cert_' . (int) $applicant_id . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
     $upload_dir = __DIR__ . '/../uploads/certificates/';
-
     if (!is_dir($upload_dir)) {
         mkdir($upload_dir, 0755, true);
     }
-
     $destination = $upload_dir . $filename;
-
     if (!move_uploaded_file($file['tmp_name'], $destination)) {
         return ['ok' => false, 'path' => null, 'message' => 'Could not save the uploaded file. Please try again.'];
     }
-
     return ['ok' => true, 'path' => 'uploads/certificates/' . $filename, 'message' => null];
 }
 
-/**
- * Fetches the college's configured mobile money payment details
- * (network name, Lipa Namba/Business Number, instructions), used to
- * show applicants exactly where to pay their application fee.
- */
 function get_payment_settings($conn) {
     $result = $conn->query('SELECT * FROM payment_settings WHERE id = 1');
     return $result->num_rows > 0 ? $result->fetch_assoc() : null;
 }
 
-/**
- * Human readable status badge helper (used in views).
- */
+function joining_instructions_path() {
+    return 'uploads/joining_instructions.pdf';
+}
+
+function joining_instructions_exists() {
+    return file_exists(__DIR__ . '/../' . joining_instructions_path());
+}
+
+function send_decision_message($conn, $applicant_id, $sender_id, $decision) {
+    if ($decision === 'approved') {
+        $subject = "Congratulations — You've Been Selected!";
+        $body = "Congratulations! You have been selected to study at our college. Welcome to PETI!";
+        $attachment = joining_instructions_exists() ? joining_instructions_path() : null;
+    } else {
+        $subject = 'Application Decision';
+        $body = 'Very sorry, you have not been selected. Try again next time.';
+        $attachment = null;
+    }
+
+    $stmt = $conn->prepare('INSERT INTO messages (applicant_id, sender_id, subject, body, attachment_path) VALUES (?, ?, ?, ?, ?)');
+    $stmt->bind_param('iisss', $applicant_id, $sender_id, $subject, $body, $attachment);
+    $stmt->execute();
+    $stmt->close();
+}
+
 function status_badge($status) {
     $map = [
         'pending'       => 'badge badge-warning',

@@ -36,7 +36,10 @@ require __DIR__ . '/../includes/header.php';
                     <strong><?php echo sanitize($msg['subject']); ?></strong>
                     <span class="muted"><?php echo sanitize($msg['sender_name']); ?> &middot; <?php echo date('d M Y, H:i', strtotime($msg['created_at'])); ?></span>
                 </div>
-                <p><?php echo nl2br(sanitize($msg['body'])); ?></p>
+           <p><?php echo nl2br(sanitize($msg['body'])); ?></p>
+                <?php if (!empty($msg['attachment_path'])): ?>
+                    <p><a class="btn btn-small btn-secondary" href="../<?php echo sanitize($msg['attachment_path']); ?>" target="_blank">Download Attachment</a></p>
+                <?php endif; ?>
             </div>
         <?php endwhile; ?>
     <?php endif; ?>

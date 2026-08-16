@@ -35,14 +35,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $upd2->bind_param('i', $payment['applicant_id']);
     $upd2->execute();
 
-    set_flash('success', 'Payment confirmed. Applicant can now complete their application form.');
+    set_flash('success', 'Payment confirmed. Applicant can now select their course.');
     redirect('payments.php');
 }
 
 $search = sanitize($_GET['q'] ?? '');
-$sql = "SELECT p.*, a.form_four_index_number, a.first_name, a.middle_name, a.last_name FROM payments p JOIN applicants a ON p.applicant_id = a.id WHERE p.status = 'pending'";
+$sql = "SELECT p.*, a.form_four_index_number, a.first_name, a.middle_name, a.last_name, a.phone AS applicant_phone
+        FROM payments p JOIN applicants a ON p.applicant_id = a.id WHERE p.status = 'pending'";
 if ($search !== '') {
-    $sql .= " AND (p.control_number LIKE '%" . $conn->real_escape_string($search) . "%' OR a.form_four_index_number LIKE '%" . $conn->real_escape_string($search) . "%')";
+    $esc = $conn->real_escape_string($search);
+    $sql .= " AND (p.control_number LIKE '%$esc%' OR p.transaction_id LIKE '%$esc%' OR p.payer_phone LIKE '%$esc%' OR a.form_four_index_number LIKE '%$esc%')";
 }
 $sql .= " ORDER BY p.created_at DESC";
 $pending_payments = $conn->query($sql);
@@ -52,33 +54,46 @@ require __DIR__ . '/../includes/header.php';
 
 <section class="admin-section">
     <h1>Confirm Payments</h1>
-    <p>Check your bank/mobile money statement for received control numbers, then confirm them here to unlock the applicant's full application form.</p>
+    <p>Check the M-Pesa/Tigo Pesa/Airtel Money SMS you receive on 0793281095 for a matching Transaction ID, then confirm the corresponding applicant here to unlock their course selection.</p>
 
     <form method="GET" class="inline-form">
-        <input type="text" name="q" placeholder="Search control number or index number" value="<?php echo sanitize($search); ?>">
+        <input type="text" name="q" placeholder="Search control number, transaction ID, phone, or index number" value="<?php echo sanitize($search); ?>" style="min-width: 320px;">
         <button type="submit" class="btn btn-secondary">Search</button>
     </form>
 
     <table class="data-table">
-        <thead><tr><th>Control Number</th><th>Applicant</th><th>Amount</th><th>Requested</th><th>Confirm</th></tr></thead>
+        <thead><tr><th>Applicant</th><th>Control Number</th><th>Transaction ID</th><th>Payer Phone / Network</th><th>Amount</th><th>Confirm</th></tr></thead>
         <tbody>
         <?php while ($p = $pending_payments->fetch_assoc()): ?>
             <tr>
+                <td><?php echo sanitize(trim($p['first_name'] . ' ' . $p['middle_name'] . ' ' . $p['last_name'])); ?> &middot; <?php echo sanitize($p['form_four_index_number']); ?></td>
                 <td><?php echo sanitize($p['control_number']); ?></td>
-                <td><?php echo sanitize($p['form_four_index_number']); ?> &middot; <?php echo sanitize(applicant_full_name($p)); ?></td>
+                <td>
+                    <?php if (!empty($p['transaction_id'])): ?>
+                        <strong><?php echo sanitize($p['transaction_id']); ?></strong>
+                    <?php else: ?>
+                        <span class="muted">Not submitted yet</span>
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <?php if (!empty($p['payer_phone'])): ?>
+                        <?php echo sanitize($p['payer_phone']); ?><br>
+                        <span class="muted"><?php echo sanitize($p['payer_network'] ?: '-'); ?></span>
+                    <?php else: ?>
+                        <span class="muted">-</span>
+                    <?php endif; ?>
+                </td>
                 <td>Tsh <?php echo number_format($p['amount'], 0); ?></td>
-                <td><?php echo date('d M Y H:i', strtotime($p['created_at'])); ?></td>
                 <td>
                     <form method="POST" class="inline-form">
                         <?php echo csrf_field(); ?>
                         <input type="hidden" name="payment_id" value="<?php echo $p['id']; ?>">
                         <select name="channel" required>
                             <option value="">Channel used</option>
-                            <option value="CRDB Bank">CRDB Bank</option>
-                            <option value="M-Pesa">M-Pesa</option>
-                            <option value="HaloPesa">HaloPesa</option>
-                            <option value="Mixx by Yas">Mixx by Yas</option>
+                            <option value="M-Pesa">M-Pesa (Vodacom)</option>
+                            <option value="Tigo Pesa/Mixx by Yas">Tigo Pesa/Mixx by Yas</option>
                             <option value="Airtel Money">Airtel Money</option>
+                            <option value="HaloPesa">HaloPesa</option>
                             <option value="Other">Other</option>
                         </select>
                         <button type="submit" class="btn btn-small btn-primary">Mark as Paid</button>
@@ -87,7 +102,7 @@ require __DIR__ . '/../includes/header.php';
             </tr>
         <?php endwhile; ?>
         <?php if ($pending_payments->num_rows === 0): ?>
-            <tr><td colspan="5">No pending payments found.</td></tr>
+            <tr><td colspan="6">No pending payments found.</td></tr>
         <?php endif; ?>
         </tbody>
     </table>

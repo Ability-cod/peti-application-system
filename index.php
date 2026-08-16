@@ -27,38 +27,29 @@ require __DIR__ . '/includes/header.php';
     <p><a href="login.php">Already applied? Log in here</a></p>
 </section>
 
-<section class="courses-section">
-    <h2>Courses Offered</h2>
-    <div class="course-grid">
-        <?php while ($course = $courses->fetch_assoc()): ?>
-            <div class="course-card">
-                <h3><?php echo sanitize($course['name']); ?></h3>
-                <p><?php echo sanitize($course['description']); ?></p>
-            </div>
-        <?php endwhile; ?>
-    </div>
-</section>
-
 <section class="requirements-section">
     <h2>What You Need to Apply</h2>
+    <p>Most of our courses are 2-year Advanced Certificate programmes. Course fees (Tsh 850,000 over 2 years, plus other charges) are separate from the application fee below, and only apply once you have been admitted &mdash; full details are sent in your Joining Instructions if you are selected.</p>
     <ul>
-        <li>Form Four Index Number (used as your login username) and year you completed Form Four</li>
+        <li>Your Form Four Index Number (used as your login username) in the format centre/candidate/year, e.g. S0001/0001/2020</li>
+        <li>Your full names (first, middle, last) and gender, exactly as they appear on your certificate</li>
+        <li>A scan or clear photo of your Form Four certificate (JPG, PNG, or PDF, max 5MB) for verification by our admissions team</li>
         <li>An active email address and phone number</li>
-        <li>Your residential address (region, district, ward, street) and postal address</li>
+        <li>Your marital status, residential address (region, district, ward, street), and postal address</li>
         <li>Your date and place of birth</li>
-        <li>Full names and contact details of your father and mother</li>
-        <li>Tsh 5,000 application fee, paid via a control number generated after you complete your application details</li>
+        <li>Full name, address, and contact details of your guardian/mdhamini</li>
+        <li>Tsh 10,000 application fee, paid via a control number generated after you complete your application details</li>
     </ul>
 </section>
 
 <section class="requirements-section">
     <h2>How It Works</h2>
     <ol>
-        <li>Register with your Form Four Index Number (verified against NECTA) and create a password</li>
-        <li>Fill in your full application details: personal, residence, birth, and parents'/guardians' information</li>
-        <li>Get your control number and pay the Tsh 5,000 application fee</li>
-        <li>Once payment is confirmed, choose the course you wish to apply for</li>
-        <li>The admissions office reviews applications and will message you with the outcome</li>
+        <li>Register with your Form Four Index Number, your names, and gender, and create a password</li>
+        <li>Fill in your full application details and upload a scan/photo of your Form Four certificate for verification</li>
+        <li>Get your control number and pay the Tsh 10,000 application fee to the college's mobile money number shown on your dashboard</li>
+        <li>Once payment is confirmed, choose the course (Advanced Certificate, 2 years) you wish to apply for right away &mdash; no waiting required</li>
+        <li>The admissions office reviews your certificate and details, and will message you with the outcome, including Joining Instructions covering course fees and what to bring if you are selected</li>
     </ol>
 </section>
 

@@ -1,2 +1,11 @@
 node_modules/ 
 vendor/ 
+
+# Vyeti vya wanafunzi na nyaraka binafsi - haziwekwi kwenye historia ya Git
+/uploads/certificates/*
+!/uploads/certificates/.gitkeep
+
+# Faili za muda za PHP/OS
+*.log
+Thumbs.db
+.DS_Store
