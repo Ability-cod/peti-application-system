@@ -20,7 +20,7 @@ if ($applicant['profile_status'] !== 'submitted') {
 }
 
 if ($applicant['payment_status'] !== 'paid') {
-    set_flash('error', 'Course selection is only available after your Tsh 5,000 payment has been confirmed.');
+    set_flash('error', 'Course selection is only available after your Tsh 10,000 payment has been confirmed.');
     redirect('dashboard.php');
 }
 

@@ -87,8 +87,8 @@ require __DIR__ . '/../includes/header.php';
             <p><strong>Place of Birth:</strong> <?php echo sanitize($applicant['birth_region'] . ', ' . $applicant['birth_district'] . ', ' . $applicant['birth_ward'] . ', ' . $applicant['birth_village_street']); ?></p>
             <p><strong>Form Four Certificate:</strong>
                 <?php if (!empty($applicant['certificate_path'])): ?>
-                    <a href="../<?php echo sanitize($applicant['certificate_path']); ?>" target="_blank">View uploaded certificate</a>
-                <?php else: ?>
+                    <a href="../serve_certificate.php?applicant_id=<?php echo $applicant['id']; ?>" target="_blank">View uploaded certificate</a>
+                    <?php else: ?>
                     <span class="muted">Not uploaded yet.</span>
                 <?php endif; ?>
             </p>

@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $has_payment = $conn->query('SELECT id FROM payments WHERE applicant_id = ' . (int) $applicant['id'])->num_rows > 0;
     if (!$has_payment) {
-        //$control_number = generate_control_number($conn);
+        $control_number = generate_control_number($conn);
         $pay_stmt = $conn->prepare('INSERT INTO payments (applicant_id, control_number, amount, status) VALUES (?, ?, 10000.00, "pending")');
         $pay_stmt->bind_param('is', $applicant['id'], $control_number);
         $pay_stmt->execute();
@@ -162,7 +162,7 @@ require __DIR__ . '/../includes/header.php';
         <h2>Form Four Certificate</h2>
         <?php if (!empty($applicant['certificate_path'])): ?>
             <p class="muted">A certificate is already on file. Upload a new one below to replace it, or leave blank to keep the current one.</p>
-            <p><a href="../<?php echo sanitize($applicant['certificate_path']); ?>" target="_blank">View currently uploaded certificate</a></p>
+            <p><a href="../serve_certificate.php?applicant_id=<?php echo $applicant['id']; ?>" target="_blank">View currently uploaded certificate</a></p>
             <input type="file" name="certificate" accept=".jpg,.jpeg,.png,.pdf">
         <?php else: ?>
             <label for="certificate">Upload Form Four Certificate (JPG, PNG, or PDF, max 5MB)</label>
