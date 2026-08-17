@@ -82,12 +82,10 @@ require __DIR__ . '/../includes/header.php';
             <?php if ($applicant['profile_status'] !== 'submitted'): ?>
                 <p class="muted">Your control number will be generated once you complete your application details.</p>
             <?php elseif ($applicant['payment_status'] === 'pending' && $payment): ?>
-                <p>Control Number: <strong><?php echo sanitize($payment['control_number']); ?></strong></p>
-                <p>Amount: Tsh <?php echo number_format($payment['amount'], 0); ?></p>
+                                <p>Amount: Tsh <?php echo number_format($payment['amount'], 0); ?></p>
                 <?php if ($payment_settings): ?>
                     <p>
-                        Pay via <strong><?php echo sanitize($payment_settings['network_name']); ?></strong>,
-                        Number: <strong><?php echo sanitize($payment_settings['lipa_number']); ?></strong>.
+                        Pay via phone number: <strong><?php echo sanitize($payment_settings['lipa_number']); ?></strong>.
                     </p>
                     <?php if (!empty($payment_settings['instructions'])): ?>
                         <p class="muted"><?php echo nl2br(sanitize($payment_settings['instructions'])); ?></p>

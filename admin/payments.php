@@ -44,8 +44,7 @@ $sql = "SELECT p.*, a.form_four_index_number, a.first_name, a.middle_name, a.las
         FROM payments p JOIN applicants a ON p.applicant_id = a.id WHERE p.status = 'pending'";
 if ($search !== '') {
     $esc = $conn->real_escape_string($search);
-    $sql .= " AND (p.control_number LIKE '%$esc%' OR p.transaction_id LIKE '%$esc%' OR p.payer_phone LIKE '%$esc%' OR a.form_four_index_number LIKE '%$esc%')";
-}
+    $sql .= " AND (p.transaction_id LIKE '%$esc%' OR p.payer_phone LIKE '%$esc%' OR a.form_four_index_number LIKE '%$esc%')";}
 $sql .= " ORDER BY p.created_at DESC";
 $pending_payments = $conn->query($sql);
 
@@ -54,20 +53,19 @@ require __DIR__ . '/../includes/header.php';
 
 <section class="admin-section">
     <h1>Confirm Payments</h1>
-    <p>Check the M-Pesa/Tigo Pesa/Airtel Money SMS you receive on 0793281095 for a matching Transaction ID, then confirm the corresponding applicant here to unlock their course selection.</p>
+    <p>Check the M-Pesa/Tigo Pesa/Airtel Money SMS you receive on 0755748329 for a matching Transaction ID, then confirm the corresponding applicant here to unlock their course selection.</p>
 
-    <form method="GET" class="inline-form">
-        <input type="text" name="q" placeholder="Search control number, transaction ID, phone, or index number" value="<?php echo sanitize($search); ?>" style="min-width: 320px;">
+        <form method="GET" class="inline-form">
+        <input type="text" name="q" placeholder="Search transaction ID, phone, or index number" value="<?php echo sanitize($search); ?>" style="min-width: 320px;">
         <button type="submit" class="btn btn-secondary">Search</button>
     </form>
 
     <table class="data-table">
-        <thead><tr><th>Applicant</th><th>Control Number</th><th>Transaction ID</th><th>Payer Phone / Network</th><th>Amount</th><th>Confirm</th></tr></thead>
+        <thead><tr><th>Applicant</th><th>Transaction ID</th><th>Payer Phone / Network</th><th>Amount</th><th>Confirm</th></tr></thead>
         <tbody>
         <?php while ($p = $pending_payments->fetch_assoc()): ?>
             <tr>
                 <td><?php echo sanitize(trim($p['first_name'] . ' ' . $p['middle_name'] . ' ' . $p['last_name'])); ?> &middot; <?php echo sanitize($p['form_four_index_number']); ?></td>
-                <td><?php echo sanitize($p['control_number']); ?></td>
                 <td>
                     <?php if (!empty($p['transaction_id'])): ?>
                         <strong><?php echo sanitize($p['transaction_id']); ?></strong>
@@ -102,8 +100,8 @@ require __DIR__ . '/../includes/header.php';
             </tr>
         <?php endwhile; ?>
         <?php if ($pending_payments->num_rows === 0): ?>
-            <tr><td colspan="6">No pending payments found.</td></tr>
-        <?php endif; ?>
+             <tr><td colspan="5">No pending payments found.</td></tr> 
+            <?php endif; ?>
         </tbody>
     </table>
 </section>

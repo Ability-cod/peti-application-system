@@ -14,24 +14,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('payment_settings.php');
     }
 
-    $network_name = sanitize($_POST['network_name'] ?? '');
     $lipa_number = sanitize($_POST['lipa_number'] ?? '');
     $instructions = sanitize($_POST['instructions'] ?? '');
 
-    if ($network_name === '' || $lipa_number === '') {
-        set_flash('error', 'Network name and phone number are required.');
+    if ($lipa_number === '') {
+        set_flash('error', 'Phone number is required.');
         redirect('payment_settings.php');
     }
 
     $exists = $conn->query('SELECT id FROM payment_settings WHERE id = 1')->num_rows > 0;
 
+    // network_name column still exists in the database but is no longer
+    // asked for here — left blank/unused since the applicant-facing
+    // pages only ever show the phone number now.
     if ($exists) {
-        $stmt = $conn->prepare('UPDATE payment_settings SET network_name=?, lipa_number=?, instructions=? WHERE id=1');
-        $stmt->bind_param('sss', $network_name, $lipa_number, $instructions);
+        $stmt = $conn->prepare('UPDATE payment_settings SET lipa_number=?, instructions=? WHERE id=1');
+        $stmt->bind_param('ss', $lipa_number, $instructions);
         $stmt->execute();
     } else {
-        $stmt = $conn->prepare('INSERT INTO payment_settings (id, network_name, lipa_number, instructions) VALUES (1, ?, ?, ?)');
-        $stmt->bind_param('sss', $network_name, $lipa_number, $instructions);
+        $stmt = $conn->prepare('INSERT INTO payment_settings (id, network_name, lipa_number, instructions) VALUES (1, "", ?, ?)');
+        $stmt->bind_param('ss', $lipa_number, $instructions);
         $stmt->execute();
     }
 
@@ -46,13 +48,10 @@ require __DIR__ . '/../includes/header.php';
 
 <section class="admin-section">
     <h1>Payment Settings</h1>
-    <p>This is the mobile money number applicants are told to pay their Tsh 10,000 application fee to. Because Tanzania's mobile networks are interoperable, students on Tigo Pesa, Airtel Money, or HaloPesa can send directly to a Vodacom M-Pesa number too &mdash; explain that in the instructions box below.</p>
+    <p>This is the phone number applicants are told to pay their Tsh 10,000 application fee to. Because Tanzania's mobile networks are interoperable, students on Tigo Pesa, Airtel Money, or HaloPesa can send directly to a Vodacom M-Pesa number too &mdash; mention that in the instructions box below if you'd like.</p>
 
     <form method="POST" class="app-form">
         <?php echo csrf_field(); ?>
-
-        <label for="network_name">Receiving Network (e.g. M-Pesa (Vodacom))</label>
-        <input type="text" id="network_name" name="network_name" required value="<?php echo sanitize($settings['network_name'] ?? ''); ?>">
 
         <label for="lipa_number">Phone Number to Receive Payment</label>
         <input type="text" id="lipa_number" name="lipa_number" required value="<?php echo sanitize($settings['lipa_number'] ?? ''); ?>">

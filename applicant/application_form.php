@@ -109,6 +109,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $has_payment = $conn->query('SELECT id FROM payments WHERE applicant_id = ' . (int) $applicant['id'])->num_rows > 0;
     if (!$has_payment) {
+                // A control number is still generated internally (the payments
+        // table requires a unique value per row), but we no longer show
+        // it to the applicant — paying to a personal phone number has
+        // no "Reference" field to put it in anyway. Matching now relies
+        // on the Transaction ID the applicant reports after paying.
         $control_number = generate_control_number($conn);
         $pay_stmt = $conn->prepare('INSERT INTO payments (applicant_id, control_number, amount, status) VALUES (?, ?, 10000.00, "pending")');
         $pay_stmt->bind_param('is', $applicant['id'], $control_number);
@@ -117,9 +122,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $payment_settings = get_payment_settings($conn);
         $pay_instructions = $payment_settings
-            ? 'Pay via ' . $payment_settings['network_name'] . ', Lipa Namba: ' . $payment_settings['lipa_number'] . ', using this control number as your Reference.'
-            : 'Pay Tsh 10,000 using this control number.';
-        set_flash('success', 'Your details and certificate have been saved. Your control number is ' . $control_number . '. ' . $pay_instructions . ' Then check back here.');
+            ? 'Pay via phone number: ' . $payment_settings['lipa_number'] . '.'
+            : 'Pay Tsh 10,000 to the college\'s phone number shown on your dashboard.';
+        set_flash('success', 'Your details and certificate have been saved. ' . $pay_instructions . ' Then check back here to submit your Transaction ID.');
     } else {
         set_flash('success', 'Your details have been updated.');
     }
