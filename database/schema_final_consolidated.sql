@@ -210,9 +210,7 @@ INSERT INTO courses (name, code, description) VALUES
 ('Advanced Certificate in Journalism', 'ACJ', 'CNO 319 — 2-year Advanced Certificate, Tsh 850,000'),
 ('Advanced Certificate in Full Secretarial Course', 'ACFS', 'CNO 320 — 2-year Advanced Certificate, Tsh 850,000'),
 ('Advanced Certificate in Nursery School Teaching', 'ACNST', 'CNO 321 — 2-year Advanced Certificate, Tsh 850,000'),
-('Event Decoration', 'DECO', 'Certificate course in event and venue decoration'),
-('Tailoring and Fashion Design', 'TAIL', 'Certificate course in tailoring and fashion design'),
-('Computer Studies', 'COMP', 'Certificate course in computer studies and ICT skills');
+
 
 -- ---------------------------------------------------
 -- Seed: One open admission window to start with
