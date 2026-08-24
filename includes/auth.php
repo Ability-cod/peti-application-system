@@ -6,7 +6,12 @@ function require_applicant() {
 }
 
 function require_admin() {
-    if (empty($_SESSION['user_type']) || $_SESSION['user_type'] !== 'staff' || $_SESSION['staff_role'] !== 'admin') {
+    // Inaruhusu Admin na Principal
+    if (
+        empty($_SESSION['user_type']) || 
+        $_SESSION['user_type'] !== 'staff' || 
+        !in_array($_SESSION['staff_role'], ['admin', 'principal'], true)
+    ) {
         redirect(BASE_URL . 'staff-login.php');
     }
 }

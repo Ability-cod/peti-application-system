@@ -166,3 +166,49 @@ function status_badge($status) {
     $label = ucwords(str_replace('_', ' ', $status));
     return '<span class="' . $class . '">' . $label . '</span>';
 }
+
+/**
+ * Scans assets/img/hero/ for image files, so the homepage carousel
+ * automatically picks up whatever photos the admin drops in there —
+ * no code changes or database entries needed. Just name files with
+ * a common prefix and drag them into that folder via FTP/File Manager.
+ */
+/**
+ * Scans assets/img/hero/ for image files, so the homepage carousel
+ * automatically picks up whatever photos the admin drops in there —
+ * no code changes or database entries needed. Just drag photos into
+ * that folder via FTP/File Manager.
+ *
+ * Uses scandir() with a case-insensitive extension check rather than
+ * glob() with a brace pattern, because glob()'s brace matching is
+ * case-sensitive even on case-insensitive filesystems (Windows) — a
+ * very common real-world snag since phone cameras often save photos
+ * as "IMG_001.JPG" (uppercase), which glob('*.jpg') would silently
+ * miss.
+ */
+function get_hero_images() {
+    $dir = __DIR__ . '/../assets/img/hero/';
+    if (!is_dir($dir)) {
+        return [];
+    }
+
+    $allowed_ext = ['jpg', 'jpeg', 'png', 'webp'];
+    $images = [];
+
+    foreach (scandir($dir) as $file) {
+        if ($file === '.' || $file === '..') {
+            continue;
+        }
+        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if (in_array($ext, $allowed_ext, true)) {
+            $images[] = 'assets/img/hero/' . $file;
+        }
+    }
+
+    sort($images);
+    return $images;
+}
+function get_active_announcements($conn, $limit = 6) {
+    $limit = (int) $limit;
+    return $conn->query("SELECT * FROM announcements WHERE is_active = 1 ORDER BY created_at DESC LIMIT $limit");
+}

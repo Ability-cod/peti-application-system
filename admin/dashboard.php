@@ -42,6 +42,7 @@ require __DIR__ . '/../includes/header.php';
         <a class="btn btn-secondary" href="courses.php">Manage Courses</a>
         <a class="btn btn-secondary" href="payments.php">Confirm Payments</a>
         <a class="btn btn-secondary" href="applications.php">Review Applications</a>
+        <a class="btn btn-secondary" href="announcements.php">Manage Announcements</a>
     </nav>
 </section>
 
