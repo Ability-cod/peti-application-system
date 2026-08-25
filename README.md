@@ -169,16 +169,6 @@ peti-system/
    so the `.htaccess` security rules take effect (edit
    `C:\xampp\apache\conf\httpd.conf` if needed, then restart Apache).
 
-## Default Logins
-
-| Role | Username | Password |
-|------|----------|----------|
-| Admin | `admin` | `Admin@2026` |
-| Principal | `principal` | `Principal@2026` |
-
-**Change these before going live.** For testing the applicant flow without
-manually paying, `install/seed_test_applicant.php` creates a test
-applicant (`TEST0001` / `Test@1234`) whose payment is already marked PAID.
 
 ## Security Notes
 
