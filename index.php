@@ -31,7 +31,7 @@ require __DIR__ . '/includes/header.php';
     <div class="hero-content">
         <p class="hero-eyebrow">Karagwe &middot; Kagera &middot; Tanzania</p>
         <h1>Skills that get you hired.</h1>
-        <p class="hero-tagline">Perfect Education and Training Institute (PETI) trains students in hospitality, tourism, journalism, secretarial work, early childhood teaching, and more &middot; and helps place them in real jobs after.</p>
+        <p class="hero-tagline">Perfect Education and Training Institute (PETI)</p>
 
         <?php if ($window): ?>
             <p class="window-open">Applications OPEN: <?php echo sanitize($window['name']); ?></p>

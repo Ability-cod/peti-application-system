@@ -152,9 +152,9 @@ h3 { font-size: 1.15rem; }
 
 .hero-content h1 {
     color: #fff;
-    font-size: 3rem;
-    line-height: 1.05;
-    margin: 0 0 16px;
+    font-size: 2.6rem;
+    line-height: 1.1;
+    margin: 0 0 14px;
 }
 
 .hero-tagline {
@@ -169,7 +169,7 @@ h3 { font-size: 1.15rem; }
 .window-open { color: #86efac; font-weight: 700; }
 .window-closed { color: #fca5a5; font-weight: 700; }
 
-/* ---------- Facts strip (signature element) ---------- */
+/* ---------- Facts strip ---------- */
 .facts-strip {
     background: var(--ochre);
     color: #fff;
@@ -371,11 +371,7 @@ h3 { font-size: 1.15rem; }
 
 .action-row { display: flex; gap: 12px; margin: 16px 0; }
 
-/* ---------- Scroll reveal ----------
-   Content is visible by default (no JS required). JavaScript adds
-   .js-hidden on load, THEN reveals each section as it scrolls into
-   view. If JS fails or is disabled, sections simply stay visible —
-   they are never permanently hidden. */
+/* ---------- Scroll reveal ---------- */
 .reveal { transition: opacity 0.7s ease, transform 0.7s ease; }
 .reveal.js-hidden {
     opacity: 0;
@@ -484,6 +480,7 @@ h3 { font-size: 1.15rem; }
     font-size: 0.82rem;
 }
 
+/* ========== Tablet & small screens ========== */
 @media (max-width: 700px) {
     .grid-2, .detail-grid { grid-template-columns: 1fr; }
     .header-inner {
@@ -513,4 +510,73 @@ h3 { font-size: 1.15rem; }
     .hero-content h1 { font-size: 2.1rem; }
     .hero-content { padding: 40px 20px 34px; }
     .hero-wrap { min-height: 420px; }
+}
+
+/* ========== Mobile (simu) - Hii ndiyo iliyoongezwa ========== */
+@media (max-width: 600px) {
+
+    .hero-wrap {
+        min-height: 380px;
+    }
+
+    .hero-content {
+        padding: 28px 16px 26px;
+    }
+
+    .hero-content h1 {
+        font-size: 1.7rem;
+        line-height: 1.15;
+        margin-bottom: 12px;
+    }
+
+    .hero-tagline {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 16px;
+    }
+
+    .hero-eyebrow {
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+    }
+
+    .btn-large {
+        padding: 12px 22px;
+        font-size: 0.95rem;
+    }
+
+    .why-card h3 {
+        font-size: 1.05rem;
+    }
+
+    .why-card p {
+        font-size: 0.88rem;
+    }
+
+    .why-number {
+        font-size: 1.35rem;
+    }
+
+    .facts-strip-inner {
+        font-size: 0.78rem;
+        padding: 10px 12px;
+    }
+
+    .facts-strip-inner span {
+        margin: 3px 8px;
+    }
+
+    h1 {
+        font-size: 1.7rem;
+    }
+
+    h2 {
+        font-size: 1.3rem;
+    }
+
+    .announcement-card,
+    .course-card,
+    .why-card {
+        padding: 16px;
+    }
 }
