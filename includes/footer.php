@@ -10,7 +10,8 @@
             <h4>Contact Us</h4>
             <p><strong>Help Desk:</strong> <a href="tel:0775830058">0775 830 058</a></p>
             <p><strong>Admission Office:</strong> <a href="tel:0742284479">0742 284 479</a> / <a href="tel:0755748329">0755 748 329</a></p>
-            <p><strong>Email:</strong> <a href="mailto:mbekimbeki08@gmail.com">mbekimbeki08@gmail.com</a></p> <a href="mailto:perfecteducation1276@gmail.com">perfecteducation1276@gmail.com</a>
+            <p><strong>Email:</strong> <a href="mailto:mbekimbeki08@gmail.com">mbekimbeki08@gmail.com</a></p><br />
+            <a href="mailto:perfecteducation1276@gmail.com">perfecteducation1276@gmail.com</a>
         </div>
         <div class="footer-col">
             <h4>Quick Links</h4>
